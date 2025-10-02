@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis A.I Assistant - Connected</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .bg-gray-750 { background-color: #2d3748; }
+        .bg-gray-850 { background-color: #1a202e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-connected { background-color: #10b981; }
+        .status-disconnected { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 min-h-screen flex items-center justify-center p-4">
+    <div id="app" class="w-full max-w-4xl h-[90vh] bg-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-blue-500/30">
+        
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">JARVIS A.I</h1>
+                        <p class="text-sm text-blue-100 flex items-center">
+                            <span id="statusIndicator" class="status-indicator status-disconnected"></span>
+                            <span id="statusText">Connecting to Python...</span>
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div id="clock" class="text-2xl font-mono">00:00:00</div>
+                    <div class="text-xs text-blue-100">System Active</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Commands -->
+        <div class="bg-gray-750 p-3 border-b border-gray-700">
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="sendQuickCommand('What is the time'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-blue-600 text-white rounded-lg transition-colors whitespace-nowrap text-sm">
+                    ⏰ <span>Time</span>
+                </button>
+                <button onclick="sendQuickCommand('What is the temperature'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-blue-600 text-white rounded-lg transition-colors whitespace-nowrap text-sm">
+                    ☁️ <span>Weather</span>
+                </button>
+                <button onclick="sendQuickCommand('Tell me the headlines'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-blue-600 text-white rounded-lg transition-colors whitespace-nowrap text-sm">
+                    📰 <span>News</span>
+                </button>
+                <button onclick="sendQuickCommand('Open YouTube'); return false;" class="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-blue-600 text-white rounded-lg transition-colors whitespace-nowrap text-sm">
+                    📺 <span>YouTube</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-850">
+            <div id="welcomeMessage" class="text-center text-gray-400 mt-20">
+                <svg class="mx-auto mb-4 opacity-50" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                <p class="text-xl mb-2">Welcome to Jarvis A.I</p>
+                <p class="text-sm">Connected to Python Backend</p>
+            </div>
+            <div id="messages"></div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="bg-gray-800 border-t border-gray-700 p-4">
+            <form id="messageForm" onsubmit="event.preventDefault(); sendMessage(); return false;" class="flex gap-3">
+                <button type="button" id="micButton" onclick="toggleListening(); return false;" class="p-3 rounded-xl transition-all bg-blue-600 hover:bg-blue-700 text-white" title="Start Voice Command">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                </button>
+                
+                <input id="inputText" type="text" placeholder="Type a command..." class="flex-1 px-4 py-3 bg-gray-700 text-white rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                
+                <button type="submit" class="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors" title="Send Message">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
+                
+                <button type="button" onclick="clearChat(); return false;" class="p-3 bg-gray-700 hover:bg-red-600 text-white rounded-xl transition-colors" title="Clear Chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let isConnected = false;
+        let isListening = false;
+        let listeningLoop = null;
+
+        // Check connection status
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_URL}/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: '' })
+                });
+                
+                if (response.ok) {
+                    isConnected = true;
+                    document.getElementById('statusIndicator').className = 'status-indicator status-connected';
+                    document.getElementById('statusText').textContent = 'Connected to Python';
+                } else {
+                    throw new Error('Connection failed');
+                }
+            } catch (error) {
+                isConnected = false;
+                document.getElementById('statusIndicator').className = 'status-indicator status-disconnected';
+                document.getElementById('statusText').textContent = 'Python Backend Offline';
+            }
+        }
+
+        // Check connection on load and every 10 seconds
+        checkConnection();
+        setInterval(checkConnection, 10000);
+
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Add message to chat
+        function addMessage(text, type = 'user', icon = '👤') {
+            const welcomeMsg = document.getElementById('welcomeMessage');
+            if (welcomeMsg) welcomeMsg.remove();
+
+            const messagesDiv = document.getElementById('messages');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${type === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`;
+            
+            const bgColor = type === 'user' ? 'bg-blue-600' : type === 'system' ? 'bg-gray-700 italic' : 'bg-gray-700';
+            
+            messageDiv.innerHTML = `
+                <div class="max-w-[80%] rounded-2xl px-4 py-3 ${bgColor} text-white">
+                    <div class="flex items-start gap-2">
+                        <span class="text-lg">${icon}</span>
+                        <div class="flex-1">
+                            <div class="whitespace-pre-wrap break-words">${text}</div>
+                            <div class="text-xs opacity-70 mt-1">${timestamp}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Send command to Python backend
+        async function processCommand(query) {
+            if (!isConnected) {
+                addMessage('⚠️ Python backend is not running. Please start app.py first.', 'jarvis', '⚠️');
+                return;
+            }
+
+            showProcessing();
+            
+            try {
+                const response = await fetch(`${API_URL}/command`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                
+                const data = await response.json();
+                hideProcessing();
+                
+                if (data.success) {
+                    const icon = data.action === 'ai_fallback' ? '🧠' : '🤖';
+                    addMessage(data.response, 'jarvis', icon);
+                    
+                    if (data.action === 'open_website' && data.url) {
+                        window.open(data.url, '_blank');
+                    }
+                } else {
+                    addMessage(data.response || 'Command not recognized', 'jarvis', '❓');
+                }
+            } catch (error) {
+                hideProcessing();
+                addMessage('Error connecting to Python backend: ' + error.message, 'jarvis', '❌');
+            }
+        }
+
+        // Toggle listening mode
+        function toggleListening() {
+            if (!isConnected) {
+                addMessage('⚠️ Python backend is not running.', 'jarvis', '⚠️');
+                return false;
+            }
+
+            const micButton = document.getElementById('micButton');
+            
+            if (isListening) {
+                // Stop listening
+                isListening = false;
+                micButton.classList.remove('bg-red-600', 'animate-pulse-slow');
+                micButton.classList.add('bg-blue-600');
+                micButton.title = 'Start Voice Command';
+                addMessage('Voice listening stopped.', 'system', '🛑');
+            } else {
+                // Start listening
+                isListening = true;
+                micButton.classList.remove('bg-blue-600');
+                micButton.classList.add('bg-red-600', 'animate-pulse-slow');
+                micButton.title = 'Stop Voice Command';
+                addMessage('Voice listening active. Click again to stop.', 'system', '🎤');
+                
+                // Start continuous listening
+                continuousListen();
+            }
+            
+            return false;
+        }
+
+        // Continuous listening loop
+        async function continuousListen() {
+            if (!isListening) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/listen`);
+                const data = await response.json();
+                
+                if (isListening && data.success && data.query && data.query.trim() && !data.query.includes('Error')) {
+                    addMessage(data.query, 'user', '👤');
+                    await processCommand(data.query);
+                }
+            } catch (error) {
+                console.error('Listening error:', error);
+            }
+            
+            // Continue listening if still active
+            if (isListening) {
+                setTimeout(() => continuousListen(), 500);
+            }
+        }
+
+        function showProcessing() {
+            const messagesDiv = document.getElementById('messages');
+            const processingDiv = document.createElement('div');
+            processingDiv.id = 'processingIndicator';
+            processingDiv.className = 'flex justify-start';
+            processingDiv.innerHTML = `
+                <div class="bg-gray-700 text-white rounded-2xl px-4 py-3">
+                    <div class="flex items-center gap-2">
+                        <div class="flex gap-1">
+                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                        </div>
+                        <span class="text-sm">Processing...</span>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(processingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideProcessing() {
+            const processingDiv = document.getElementById('processingIndicator');
+            if (processingDiv) processingDiv.remove();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('inputText');
+            const text = input.value.trim();
+            if (text) {
+                addMessage(text, 'user', '👤');
+                processCommand(text);
+                input.value = '';
+            }
+            return false;
+        }
+
+        function sendQuickCommand(command) {
+            addMessage(command, 'user', '👤');
+            processCommand(command);
+            return false;
+        }
+
+        function clearChat() {
+            document.getElementById('messages').innerHTML = '';
+            return false;
+        }
+
+        // Prevent any form submissions
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('messageForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    sendMessage();
+                    return false;
+                });
+            }
+        });
+
+        // Focus input on load
+        window.onload = () => {
+            document.getElementById('inputText').focus();
+        };
+    </script>
+</body>
+</html>
