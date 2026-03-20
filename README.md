@@ -90,5 +90,3 @@ This project is open-source under the MIT License.
 
 
 ---
-
-Would you like me to include a **`requirements.txt`** file too (with exact Python packages)?
